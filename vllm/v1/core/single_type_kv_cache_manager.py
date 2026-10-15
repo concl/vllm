@@ -1484,6 +1484,12 @@ class MambaManager(SingleTypeKVCacheManager):
         hit_length = 0
 
         block_size = kv_cache_spec.block_size
+        if drop_eagle_block:
+            # An EAGLE/MTP cache hit must not reuse the final matched block: its
+            # recurrent-state snapshot may have been taken over draft positions
+            # that verification later rejected. Lowering max_length bounds both
+            # the fine-grained and coarse searches below (vllm#48375, #43559).
+            max_length = max(0, max_length - block_size)
         if alignment_tokens < block_size and block_size % alignment_tokens == 0:
             # list or lazy BlobBlockHashes view
             assert isinstance(block_hashes, Sequence)
